@@ -3,58 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="CSS/poki.css"> <!-- Lien vers le fichier CSS -->
     <title>Combat Pokémon</title>
-    <style>
-        .background-container { position: relative; width: 100%; height: 100vh; overflow: hidden; }
-        .background { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(to bottom, #87CEEB, #4CAF50); z-index: -1; }
-        .sun { position: absolute; top: 10%; left: 80%; width: 100px; height: 100px; background: radial-gradient(circle, #FFD700, #FFA500); border-radius: 50%; box-shadow: 0 0 50px 20px rgba(255, 223, 0, 0.8); }
-        .trees { position: absolute; bottom: 0; width: 100%; height: 30%; background-color: #228B22; }
-        .selection-container { margin-bottom: 20px; display: flex; gap: 10px; align-items: center; justify-content: center; }
-        .arena { display: flex; justify-content: space-around; align-items: center; padding: 20px; }
-        .pokemon-container { display: flex; flex-direction: column; align-items: center; position: relative; }
-        .pokemon { width: 150px; height: auto; transition: transform 0.3s ease-in-out; }
-        .pokemon.attack { transform: scale(1.1); }
-        .health-bar { width: 100%; background-color: #f0f0f0; border-radius: 5px; height: 15px; margin-top: 5px; }
-        .health-value { background-color: green; height: 100%; border-radius: 5px; width: 100%; transition: width 0.3s ease-in-out; }
-        .pokemon-info { text-align: center; margin-bottom: 10px; }
-        .score-display { margin-top: 10px; padding: 8px 12px; background-color: rgba(0, 0, 0, 0.7); color: white; border-radius: 5px; font-weight: bold; font-size: 0.9em; }
-        #battle-log { text-align: center; margin-top: 20px; overflow-y: auto; max-height: 150px; border: 1px solid #ccc; padding: 10px; border-radius: 5px; }
-        .fire-attack { animation: fire 0.5s ease-in-out forwards; position: absolute; width: 50px; height: 50px; background-color: orange; border-radius: 50%; opacity: 0.8; z-index: 1; }
-        @keyframes fire { 0% { transform: translate(0, 0) scale(0.5); opacity: 0.8; } 50% { transform: translate(50px, -20px) scale(1.2); opacity: 1; } 100% { transform: translate(100px, 0) scale(0.8); opacity: 0; } }
-        .water-attack { animation: water 0.6s ease-out forwards; position: absolute; width: 40px; height: 40px; background-color: lightblue; border-radius: 50%; opacity: 0.7; z-index: 1; }
-        @keyframes water { 0% { transform: translate(0, 0) scale(0.3); opacity: 0.7; } 50% { transform: translate(60px, 10px) scale(1.1); opacity: 0.9; } 100% { transform: translate(120px, -10px) scale(0.7); opacity: 0; } }
-        .electric-attack { animation: electric 0.4s linear forwards; position: absolute; width: 10px; height: 30px; background-color: yellow; opacity: 0.9; z-index: 1; box-shadow: 0 0 10px yellow; }
-        @keyframes electric { 0% { transform: translate(0, 0) rotate(-30deg) scaleY(0.5); opacity: 0.9; } 50% { transform: translate(70px, -15px) rotate(30deg) scaleY(1.5); opacity: 1; } 100% { transform: translate(140px, 0) rotate(-15deg) scaleY(0.8); opacity: 0; } }
-        .shake { animation: shake 0.1s infinite alternate; }
-        @keyframes shake { 0% { transform: translate(1px, 1px) rotate(0deg); } 10% { transform: translate(-1px, -2px) rotate(-1deg); } 20% { transform: translate(-3px, 0px) rotate(1deg); } 30% { transform: translate(3px, 2px) rotate(0deg); } 40% { transform: translate(1px, -1px) rotate(1deg); } 50% { transform: translate(-1px, 2px) rotate(-1deg); } 60% { transform: translate(-3px, 1px) rotate(0deg); } 70% { transform: translate(3px, 1px) rotate(-1deg); } 80% { transform: translate(-1px, -1px) rotate(1deg); } 90% { transform: translate(1px, 2px) rotate(0deg); } 100% { transform: translate(1px, -2px) rotate(-1deg); } }
-        .attack-buttons { display: flex; justify-content: center; margin-top: 20px; gap: 10px; }
-        .attack-button { padding: 10px 15px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; }
-        .fire-button { background-color: #ff6f61; color: white; }
-        .water-button { background-color: #4682b4; color: white; }
-        .electric-button { background-color: #ffd700; color: black; }
-
-        #winner-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.8);
-            display: none;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            z-index: 10;
-            color: white;
-            font-size: 24px;
-        }
-
-        #winner-overlay img {
-            width: 200px;
-            height: auto;
-            margin-top: 20px;
-        }
-    </style>
 </head>
 <body>
     <div class="background-container">
@@ -86,7 +36,7 @@
             <button onclick="initializeBattle()">Fight</button>
         </div>
 
-        <div class="arena">
+        <div class="arena" id="battle-arena">
             <div class="pokemon-container" id="pokemon1-container">
                 <div class="pokemon-info">
                     <span id="pokemon1-name"></span><br>
@@ -134,8 +84,12 @@
         let scorePlayer1 = 0;
         let scorePlayer2 = 0;
         let isPlayer1Turn = true;
-        const winningAttackPower = 75;
         let canAttack = false;
+
+        let pokemon1Left = 0;
+        let pokemon2Left = 0;
+        const movementSpeed = 15;
+        const collisionThreshold = 100;
 
         const typeEffectiveness = {
             normal: { normal: 1, fire: 1, water: 1, grass: 1, electric: 1 },
@@ -221,8 +175,22 @@
             canAttack = true;
             logMessage(`${pokemon1Data.name} vs ${pokemon2Data.name} - Le combat commence !`);
             showAttackControls();
+
+            const arena = document.getElementById("battle-arena");
+            const arenaWidth = arena.offsetWidth;
+            const pokemon1Container = document.getElementById("pokemon1-container");
+            const pokemon2Container = document.getElementById("pokemon2-container");
+
+            pokemon1Left = arenaWidth * 0.1;
+            pokemon2Left = arenaWidth * 0.9 - pokemon2Container.offsetWidth;
+
+            pokemon1Container.style.left = `${pokemon1Left}px`;
+            pokemon2Container.style.left = `${pokemon2Left}px`;
+
             document.removeEventListener('keydown', handleKeyPress);
             document.addEventListener('keydown', handleKeyPress);
+            document.getElementById("battle-arena").removeEventListener('contextmenu', handleRightClick);
+            document.getElementById("battle-arena").addEventListener('contextmenu', handleRightClick);
         }
 
         async function animateAttack(attackerContainerId, attackerImageId, defenderContainerId, defenderImageId, attackType = 'normal') {
@@ -253,27 +221,19 @@
                 attackerContainer.appendChild(attackElement);
                 const attackerRect = attackerContainer.getBoundingClientRect();
                 const defenderRect = defenderContainer.getBoundingClientRect();
-                const startX = attackerRect.left + attackerRect.width / 2 - attackerRect.left;
-                const startY = attackerRect.top + attackerRect.height / 2 - attackerRect.top;
-                const endX = defenderRect.left + defenderRect.width / 2 - attackerRect.left;
-                const endY = defenderRect.top + attackerRect.height / 2 - attackerRect.top;
+
+                const startX = attackerImage.offsetLeft + attackerImage.offsetWidth / 2 - attackElement.offsetWidth / 2;
+                const startY = attackerImage.offsetTop + attackerImage.offsetHeight / 2 - attackElement.offsetHeight / 2;
+
+                const endX = (defenderRect.left + defenderRect.width / 2) - attackerRect.left - attackElement.offsetWidth / 2;
+                const endY = (defenderRect.top + defenderRect.height / 2) - attackerRect.top - attackElement.offsetHeight / 2;
 
                 const duration = 500;
-                const keyframes = [];
-
-                if (attackType === 'fire') {
-                    keyframes.push({ transform: `translate(0, 0) scale(0.5)`, opacity: 0.8 });
-                    keyframes.push({ transform: `translate(${endX - startX}px, ${endY - startY}px) scale(1.2)`, opacity: 1 });
-                    keyframes.push({ transform: `translate(${endX - startX}px, ${endY - startY}px) scale(0.8)`, opacity: 0 });
-                } else if (attackType === 'water') {
-                    keyframes.push({ transform: `translate(0, 0) scale(0.3)`, opacity: 0.7 });
-                    keyframes.push({ transform: `translate(${endX - startX}px, ${endY - startY}px) scale(1.1)`, opacity: 0.9 });
-                    keyframes.push({ transform: `translate(${endX - startX}px, ${endY - startY}px) scale(0.7)`, opacity: 0 });
-                } else if (attackType === 'electric') {
-                    keyframes.push({ transform: `translate(0, 0) rotate(-30deg) scaleY(0.5)`, opacity: 0.9 });
-                    keyframes.push({ transform: `translate(${endX - startX}px, ${endY - startY}px) rotate(30deg) scaleY(1.5)`, opacity: 1 });
-                    keyframes.push({ transform: `translate(${endX - startX}px, ${endY - startY}px) rotate(-15deg) scaleY(0.8)`, opacity: 0 });
-                }
+                const keyframes = [
+                    { transform: `translate(${startX}px, ${startY}px) scale(0.5)`, opacity: 0.8 },
+                    { transform: `translate(${endX}px, ${endY}px) scale(1.2)`, opacity: 1 },
+                    { transform: `translate(${endX}px, ${endY}px) scale(0.8)`, opacity: 0 }
+                ];
 
                 attackElement.animate(keyframes, { duration: duration, easing: 'ease-in-out' });
                 animationPromise = new Promise(resolve => setTimeout(resolve, duration));
@@ -298,60 +258,84 @@
             const typeMultiplier = typeEffectiveness[attackType]?.[defenderType] || 1;
             damage = Math.max(1, Math.floor(basePower * typeMultiplier));
 
-            logMessage(`${attackerData.name} utilise ${attackType} et inflige ${damage} dégâts à ${defenderData.name} (type: ${attackerType}, efficacité: ${typeMultiplier.toFixed(2)}).`);
+            let attackerContainerId = "";
+            let attackerImageId = "";
+            let defenderContainerId = "";
+            let defenderImageId = "";
 
             if (attackerData.name === pokemon1Data.name) {
-                await animateAttack("pokemon1-container", "pokemon1-image", "pokemon2-container", "pokemon2-image", attackType);
-                currentPokemon2Health = Math.max(0, currentPokemon2Health - damage);
+                attackerContainerId = "pokemon1-container";
+                attackerImageId = "pokemon1-image";
+                defenderContainerId = "pokemon2-container";
+                defenderImageId = "pokemon2-image";
             } else {
-                await animateAttack("pokemon2-container", "pokemon2-image", "pokemon1-container", "pokemon1-image", attackType);
+                attackerContainerId = "pokemon2-container";
+                attackerImageId = "pokemon2-image";
+                defenderContainerId = "pokemon1-container";
+                defenderImageId = "pokemon1-image";
+            }
+
+            // logMessage(`${attackerData.name} utilise ${attackType}!`); // Supprimé
+            await animateAttack(attackerContainerId, attackerImageId, defenderContainerId, defenderImageId, attackType);
+
+            if (attackerData.name === pokemon1Data.name) {
+                currentPokemon2Health = Math.max(0, currentPokemon2Health - damage);
+                // logMessage(`${pokemon2Data.name} subit ${damage} dégâts. Reste ${currentPokemon2Health} PV.`); // Supprimé
+            } else {
                 currentPokemon1Health = Math.max(0, currentPokemon1Health - damage);
+                // logMessage(`${pokemon1Data.name} subit ${damage} dégâts. Reste ${currentPokemon1Health} PV.`); // Supprimé
             }
 
             updateHealthBars();
             updateHealthText();
 
             if (currentPokemon1Health <= 0 || currentPokemon2Health <= 0) {
-                determineWinnerByAttackPower();
+                determineWinner();
             } else {
                 isPlayer1Turn = !isPlayer1Turn;
+                // logMessage(`C'est au tour de ${isPlayer1Turn ? pokemon1Data.name : pokemon2Data.name}.`); // Supprimé
                 setTimeout(() => {
                     canAttack = true;
                 }, 1000);
             }
         }
 
-        function determineWinnerByAttackPower() {
+        function determineWinner() {
             let winner = null;
-            const attackPower1 = attackPowers[getPokemonType(pokemon1Data)] || attackPowers['normal'];
-            const attackPower2 = attackPowers[getPokemonType(pokemon2Data)] || attackPowers['normal'];
+            let winnerPokemonData = null;
 
             if (currentPokemon1Health <= 0 && currentPokemon2Health <= 0) {
-                if (attackPower1 > attackPower2) {
-                    winner = pokemon1Data.name;
-                } else if (attackPower2 > attackPower1) {
-                    winner = pokemon2Data.name;
-                } else {
-                    winner = "Aucun";
-                }
+                logMessage("Double KO ! C'est un match nul.");
+                winner = "Personne";
             } else if (currentPokemon1Health <= 0) {
                 winner = pokemon2Data.name;
+                winnerPokemonData = pokemon2Data;
+                scorePlayer2++;
             } else {
                 winner = pokemon1Data.name;
+                winnerPokemonData = pokemon1Data;
+                scorePlayer1++;
             }
 
-            displayWinner(winner);
+            updateScores();
+            displayWinner(winner, winnerPokemonData);
+            canAttack = false;
         }
 
-        function displayWinner(winner) {
+        function displayWinner(winnerName, winnerPokemon) {
             const winnerOverlay = document.getElementById("winner-overlay");
             const winnerNameDisplay = document.getElementById("winner-name-display");
             const winnerImageDisplay = document.getElementById("winner-image-display");
 
-            winnerNameDisplay.textContent = `${winner} a gagné le combat !`;
-            let winnerData = winner === pokemon1Data.name ? pokemon1Data : pokemon2Data;
-            winnerImageDisplay.src = winnerData.sprites.front_default;
+            winnerNameDisplay.textContent = `${winnerName} a gagné le combat !`;
+            if (winnerPokemon) {
+                winnerImageDisplay.src = winnerPokemon.sprites.front_default;
+            } else {
+                winnerImageDisplay.src = "";
+            }
             winnerOverlay.style.display = "flex";
+            document.removeEventListener('keydown', handleKeyPress);
+            document.getElementById("battle-arena").removeEventListener('contextmenu', handleRightClick);
         }
 
         function resetBattle() {
@@ -364,32 +348,109 @@
             updateHealthText();
             isPlayer1Turn = true;
             canAttack = true;
+            document.getElementById("battle-log").textContent = "";
             logMessage(`Nouveau combat !`);
+            showAttackControls();
             document.addEventListener('keydown', handleKeyPress);
-            hideAttackControls();
+            document.getElementById("battle-arena").addEventListener('contextmenu', handleRightClick);
+            initializeBattle();
         }
 
-
         function handleKeyPress(event) {
+            const pokemon1Container = document.getElementById("pokemon1-container");
+            const pokemon2Container = document.getElementById("pokemon2-container");
+            const arena = document.getElementById("battle-arena");
+
+            const arenaRect = arena.getBoundingClientRect();
+            const p1Rect = pokemon1Container.getBoundingClientRect();
+            const p2Rect = pokemon2Container.getBoundingClientRect();
+
+            let newP1Left = pokemon1Left;
+            let newP2Left = pokemon2Left;
+
+            // Player 1 (Arrow Keys)
+            if (event.key === 'ArrowLeft') {
+                newP1Left = Math.max(0, pokemon1Left - movementSpeed);
+            } else if (event.key === 'ArrowRight') {
+                newP1Left = Math.min(arenaRect.width - p1Rect.width, pokemon1Left + movementSpeed);
+            }
+
+            // Player 2 (WASD Keys)
+            if (event.key === 'a' || event.key === 'A') {
+                newP2Left = Math.max(0, pokemon2Left - movementSpeed);
+            } else if (event.key === 'd' || event.key === 'D') {
+                newP2Left = Math.min(arenaRect.width - p2Rect.width, pokemon2Left + movementSpeed);
+            }
+
+            // Apply new positions
+            pokemon1Left = newP1Left;
+            pokemon2Left = newP2Left;
+
+            pokemon1Container.style.left = `${pokemon1Left}px`;
+            pokemon2Container.style.left = `${pokemon2Left}px`;
+
+            // Handle attacks based on key presses
             if (!canAttack) return;
+
             if (event.key === 'f' || event.key === 'F') {
                 if (isPlayer1Turn) {
                     performAttack(pokemon1Data, pokemon2Data, 'fire');
                 } else {
                     performAttack(pokemon2Data, pokemon1Data, 'fire');
                 }
-            }  else if (event.key === 'e' || event.key === 'E') {
+            } else if (event.key === 'e' || event.key === 'E') {
                 if (isPlayer1Turn) {
                     performAttack(pokemon1Data, pokemon2Data, 'electric');
                 } else {
                     performAttack(pokemon2Data, pokemon1Data, 'electric');
                 }
-            } else if (event.key === 'a' || event.key === 'A') {
+            } else if (event.key === 'q' || event.key === 'Q') { // Changed P1 Water to 'Q' to avoid conflict with P2 movement 'A'
+                 if (isPlayer1Turn) {
+                     performAttack(pokemon1Data, pokemon2Data, 'water');
+                 }
+            } else if (event.key === 'w' || event.key === 'W') { // Changed P2 Water to 'W' to avoid conflict with P2 movement 'A'
+                 if (!isPlayer1Turn) {
+                     performAttack(pokemon2Data, pokemon1Data, 'water');
+                 }
+            }
+        }
+
+        function checkCollision() {
+            const pokemon1Container = document.getElementById("pokemon1-container");
+            const pokemon2Container = document.getElementById("pokemon2-container");
+
+            const p1Rect = pokemon1Container.getBoundingClientRect();
+            const p2Rect = pokemon2Container.getBoundingClientRect();
+
+            const p1Left = p1Rect.left;
+            const p1Right = p1Rect.right;
+            const p2Left = p2Rect.left;
+            const p2Right = p2Rect.right;
+
+            // Check for horizontal overlap
+            const horizontalOverlap = Math.max(0, Math.min(p1Right, p2Right) - Math.max(p1Left, p2Left));
+
+            // Collision occurs if there's significant overlap
+            return horizontalOverlap > (p1Rect.width + p2Rect.width) / 2 - collisionThreshold;
+        }
+
+        function handleRightClick(event) {
+            event.preventDefault(); // Prevent default right-click context menu
+
+            if (!canAttack) {
+                // logMessage("Impossible d'attaquer maintenant."); // Supprimé
+                return;
+            }
+
+            if (checkCollision()) {
+                // logMessage("Collision détectée ! Tentative d'attaque..."); // Supprimé
                 if (isPlayer1Turn) {
-                    performAttack(pokemon1Data, pokemon2Data, 'water');
+                    performAttack(pokemon1Data, pokemon2Data, 'normal');
                 } else {
-                    performAttack(pokemon2Data, pokemon1Data, 'water');
+                    performAttack(pokemon2Data, pokemon1Data, 'normal');
                 }
+            } else {
+                // logMessage("Pas de collision pour l'attaque au clic droit."); // Supprimé
             }
         }
 

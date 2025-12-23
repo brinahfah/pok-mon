@@ -1,0 +1,221 @@
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Fredoka:wght@400;600&display=swap');
+
+
+/* ===== BASE ===== */
+body {
+    margin: 0;
+    font-family: 'Fredoka', sans-serif;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100vh;
+    background-color: #e6f0f5;
+}
+
+/* ===== BACKGROUND ===== */
+.background-container {
+    position: relative;
+    width: 100%;
+    height: 100vh;
+    overflow: hidden;
+}
+
+.background {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to bottom, #87CEEB, #3cb371);
+    z-index: -2;
+}
+
+.sun {
+    position: absolute;
+    top: 8%;
+    left: 75%;
+    width: 100px;
+    height: 100px;
+    background: radial-gradient(circle, #FFD700, #FFA500);
+    border-radius: 50%;
+    box-shadow: 0 0 60px 25px rgba(255, 215, 0, 0.8);
+}
+
+.trees {
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    height: 30%;
+    background: linear-gradient(to top, #145a32, #228b22);
+}
+
+/* ===== TITRE ===== */
+h1 {
+    font-family: 'Press Start 2P', cursive;
+    font-size: 26px;
+    color: #2b2b2b;
+    text-shadow: 2px 2px 0 #ffffff, 4px 4px 0 rgba(0,0,0,0.2);
+    margin-bottom: 15px;
+}
+
+/* ===== ARENA ===== */
+.arena {
+    position: relative;
+    width: 80%;
+    max-width: 900px;
+    height: 320px;
+    margin-top: 20px;
+    padding: 20px;
+    border-radius: 16px;
+    background: rgba(255,255,255,0.35);
+    backdrop-filter: blur(6px);
+    border: 3px solid rgba(0,0,0,0.15);
+    z-index: 1;
+    overflow: hidden;
+}
+
+/* ===== POKÉMON ===== */
+.pokemon-container {
+    position: absolute;
+    bottom: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    transition: left 0.05s linear;
+}
+
+.pokemon {
+    width: 150px;
+    transition: transform 0.3s ease;
+}
+
+.pokemon.attack {
+    transform: scale(1.15);
+}
+
+/* ===== INFOS ===== */
+.pokemon-info,
+.score-display,
+#battle-log {
+    font-family: 'Fredoka', sans-serif;
+    font-size: 14px;
+}
+
+.health-bar {
+    width: 120px;
+    height: 14px;
+    background: #ddd;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.health-value {
+    height: 100%;
+    background: linear-gradient(to right, #00c853, #b2ff59);
+    transition: width 0.3s ease;
+}
+
+/* ===== SCORE ===== */
+.score-display {
+    margin-top: 10px;
+    padding: 8px 14px;
+    font-family: 'Press Start 2P', cursive;
+    font-size: 10px;
+    background: rgba(0,0,0,0.8);
+    color: #00ff99;
+    border-radius: 8px;
+}
+
+/* ===== LOG ===== */
+#battle-log {
+    margin-top: 20px;
+    max-height: 140px;
+    overflow-y: auto;
+    padding: 12px;
+    font-family: 'Press Start 2P', cursive;
+    font-size: 10px;
+    background: rgba(0,0,0,0.75);
+    color: #00ff99;
+    border: 2px solid #00ff99;
+    border-radius: 10px;
+    z-index: 1;
+}
+
+
+
+
+/* ===== ATTAQUES ===== */
+.attack-buttons {
+    margin-top: 20px;
+    display: flex;
+    gap: 14px;
+    z-index: 1;
+}
+
+.attack-button {
+    padding: 14px 18px;
+    border-radius: 14px;
+    font-family: 'Press Start 2P', cursive;
+    font-size: 11px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 6px 0 rgba(0,0,0,0.3);
+}
+
+/* FEU */
+.fire-button {
+    background: linear-gradient(145deg, #ff512f, #dd2476);
+    color: white;
+}
+
+.fire-button:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 18px rgba(255, 81, 47, 0.7);
+}
+
+/* EAU */
+.water-button {
+    background: linear-gradient(145deg, #2193b0, #6dd5ed);
+    color: white;
+}
+
+.water-button:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 18px rgba(33,147,176,0.7);
+}
+
+/* ELECTRIQUE */
+.electric-button {
+    background: linear-gradient(145deg, #fceabb, #f8b500);
+    color: #222;
+}
+
+.electric-button:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 18px rgba(248,181,0,0.7);
+}
+
+.attack-button:active {
+    transform: translateY(4px);
+    box-shadow: 0 2px 0 rgba(0,0,0,0.3);
+}
+
+
+/* ===== OVERLAY WINNER ===== */
+#winner-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.85);
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    font-family: 'Press Start 2P', cursive;
+    color: #00ff99;
+    font-size: 22px;
+    z-index: 10;
+}
+
+#winner-overlay img {
+    margin-top: 20px;
+    width: 200px;
+}
