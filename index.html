@@ -91,15 +91,13 @@
         /*Mise en place d’une persistance des données via le stockage local du navigateur 
         afin d’assurer la continuité du service entre deux utilisations.*/
        
-        scorePlayer1 = Number(localStorage.getItem("scorePlayer1")) || 0;
-        scorePlayer2 = Number(localStorage.getItem("scorePlayer2")) || 0;
 
         let pokemon1Data;
         let pokemon2Data;
         let currentPokemon1Health;
         let currentPokemon2Health;
-        let scorePlayer1 = 0;
-        let scorePlayer2 = 0;
+        let scorePlayer1 = Number(localStorage.getItem("scorePlayer1")) || 0;
+        let scorePlayer2 = Number(localStorage.getItem("scorePlayer2")) || 0;
         let isPlayer1Turn = true;
         let canAttack = false;
 
@@ -202,6 +200,13 @@
             const results1 = await getPokemonData(pokemon1Id, { image: "pokemon1-image", name: "pokemon1-name" });
             const results2 = await getPokemonData(pokemon2Id, { image: "pokemon2-image", name: "pokemon2-name" });
 
+            // ✅ Sécurité si l’API échoue
+            if (!results1 || !results2) {
+                alert("Impossible de démarrer le combat.");
+                return;
+            }
+
+
             pokemon1Data = results1.data;
             pokemon2Data = results2.data;
             currentPokemon1Health = results1.baseHealth;
@@ -228,7 +233,7 @@
             pokemon2Container.style.left = `${pokemon2Left}px`;
 
             document.removeEventListener('keydown', handleKeyPress);
-            document.addEventListener('keydown', handleKeyPress);
+            document.addEventListener('keydown', handleKeyPress)
             document.getElementById("battle-arena").removeEventListener('contextmenu', handleRightClick);
             document.getElementById("battle-arena").addEventListener('contextmenu', handleRightClick);
         }
@@ -382,10 +387,6 @@
             const winnerOverlay = document.getElementById("winner-overlay");
             winnerOverlay.style.display = "none";
 
-            currentPokemon1Health = pokemon1Data.stats.find(stat => stat.stat.name === "hp").base_stat;
-            currentPokemon2Health = pokemon2Data.stats.find(stat => stat.stat.name === "hp").base_stat;
-            updateHealthBars();
-            updateHealthText();
             isPlayer1Turn = true;
             canAttack = true;
             document.getElementById("battle-log").textContent = "";
