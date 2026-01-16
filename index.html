@@ -36,6 +36,14 @@
             <button onclick="initializeBattle()">Fight</button>
         </div>
 
+        <div class="help-box">
+            <h3>Commandes du jeu</h3>
+            <p><strong>Joueur 1 :</strong> ← → pour se déplacer | F = Feu | Q = Eau | E = Éclair</p>
+            <p><strong>Joueur 2 :</strong> A D pour se déplacer | F = Feu | W = Eau | E = Éclair</p>
+            <p>Clic droit : attaque normale au contact</p>
+        </div>
+
+
         <div class="arena" id="battle-arena">
             <div class="pokemon-container" id="pokemon1-container">
                 <div class="pokemon-info">
@@ -76,7 +84,16 @@
         </div>
     </div>
 
+    
+
     <script>
+
+        /*Mise en place d’une persistance des données via le stockage local du navigateur 
+        afin d’assurer la continuité du service entre deux utilisations.*/
+       
+        scorePlayer1 = Number(localStorage.getItem("scorePlayer1")) || 0;
+        scorePlayer2 = Number(localStorage.getItem("scorePlayer2")) || 0;
+
         let pokemon1Data;
         let pokemon2Data;
         let currentPokemon1Health;
@@ -133,6 +150,9 @@
         function updateScores() {
             document.getElementById("score-player1").textContent = scorePlayer1;
             document.getElementById("score-player2").textContent = scorePlayer2;
+
+            localStorage.setItem("scorePlayer1", scorePlayer1);
+            localStorage.setItem("scorePlayer2", scorePlayer2);
         }
 
         function showAttackControls() {
@@ -143,17 +163,37 @@
             document.getElementById("attack-controls").style.display = "none";
         }
 
-        async function getPokemonData(pokemonId, elements) {
-            const response = await fetch(`https://pokeapi.co/api/v2/pokemon/${pokemonId}`);
-            const data = await response.json();
+        /*Mise en place d’une gestion des erreurs afin d’assurer la continuité du service et d’informer
+         l’utilisateur en cas de problème d’accès à l’API.*/
 
-            document.getElementById(elements.image).src = data.sprites.front_default;
-            document.getElementById(elements.name).textContent = data.name.charAt(0).toUpperCase() + data.name.slice(1);
+        async function getPokemonData(pokemonId, elements){
+          
+            try {
+                const response = await fetch(`https://pokeapi.co/api/v2/pokemon/${pokemonId}`);
 
-            const healthStat = data.stats.find(stat => stat.stat.name === "hp");
-            const baseHealth = healthStat ? healthStat.base_stat : 100;
-            return { baseHealth: baseHealth, data: data };
+                if (!response.ok) {
+                     throw new Error("Erreur lors de la récupération des données");
+                }
+                const data = await response.json();
+
+                document.getElementById(elements.image).src = data.sprites.front_default;
+                document.getElementById(elements.name).textContent = data.name.charAt(0).toUpperCase() + data.name.slice(1);
+                
+                const healthStat = data.stats.find(stat => stat.stat.name === "hp");
+                const baseHealth = healthStat ? healthStat.base_stat : 100;
+                
+                return { baseHealth: baseHealth, data: data };
+            
+            } catch (error) {
+              
+                alert("Impossible de charger les données du Pokémon. Vérifiez votre connexion.");
+                console.error(error);
+            }
+
         }
+            
+             
+          
 
         async function initializeBattle() {
             const pokemon1Id = document.getElementById("pokemon1-choice").value;
