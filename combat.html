@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Combat Pokémon</title>
+    <link rel="stylesheet" href="CSS/combat.css">
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Fredoka:wght@400;600&display=swap" rel="stylesheet">
+</head>
+
+<body onload="initializeBattle()">
+
+    <div class="background-container">
+        <div class="background">
+            <div class="sun"></div>
+            <div class="trees"></div>
+        </div>
+
+        <div class="content">
+                <h1>Combat Pokémon</h1>
+
+            <div class="arena">
+
+                <div class="pokemon-container" id="pokemon1-container">
+                        <h3 id="pokemon1-name"></h3>
+                        <img id="pokemon1-image">
+                    <div class="health-bar">
+                        <div class="health-value" id="pokemon1-health"></div>
+                    </div>
+                    <p>PV: <span id="pokemon1-current-health"></span></p>
+                </div>
+
+                <div class="pokemon-container" id="pokemon2-container">
+                    <h3 id="pokemon2-name"></h3>
+                    <img id="pokemon2-image">
+                    <div class="health-bar">
+                        <div class="health-value" id="pokemon2-health"></div>
+                    </div>
+                        <p>PV: <span id="pokemon2-current-health"></span></p>
+                </div>
+
+            </div>
+
+                <div class="attack-buttons">
+                    <button onclick="attack('fire')">Feu</button>
+                    <button onclick="attack('water')">Eau</button>
+                    <button onclick="attack('electric')">Éclair</button>
+                    <button onclick="goMenu()">Menu</button>
+                </div>
+
+        </div>
+
+        <!-- Menu Pause -->
+        <div class="hamburger" onclick="togglePauseMenu()">
+            ☰
+        </div>
+
+        <div id="pause-menu" class="pause-menu">
+            <button onclick="resumeGame()">Continuer</button>
+            <button onclick="goMenu()">Quitter</button>
+        </div>
+
+    </div>
+
+    <div id="winner-overlay">
+        <h2 id="winner-text"></h2>
+        <img id="winner-image">
+        <div class="winner-buttons">
+            <button onclick="restart()">Rejouer</button>
+            <button onclick="goMenu()">Quitter</button>
+        </div>
+    </div>
+
+
+<script>
+    
+    let isPaused = false;
+    let pokemon1Data, pokemon2Data;
+    let currentHP1, currentHP2;
+    let turn = 1;
+
+    function getQueryParams() {
+        const params = new URLSearchParams(window.location.search);
+        return {
+            p1: params.get("p1") || 1,
+            p2: params.get("p2") || 4
+        };
+    }
+
+    function togglePauseMenu() {
+    const menu = document.getElementById("pause-menu");
+
+        if (!isPaused) {
+            isPaused = true;
+            menu.style.display = "flex";
+        } else {
+            resumeGame();
+        }
+    }
+
+    function resumeGame() {
+        isPaused = false;
+        document.getElementById("pause-menu").style.display = "none";
+    }
+
+    function showAttackEffect(type, attackerContainer, targetContainer) {
+
+        const effect = document.createElement("div");
+        effect.classList.add("attack-effect");
+
+        // Emoji selon le type
+        if (type === "fire") effect.textContent = "🔥";
+        if (type === "water") effect.textContent = "💧";
+        if (type === "electric") effect.textContent = "⚡";
+
+        // Ajouter à l'arène pour pouvoir bouger librement
+        const arena = document.querySelector(".arena");
+        arena.appendChild(effect);
+
+        // Position initiale du projectile (centre de l'attaquant)
+        const attackerRect = attackerContainer.getBoundingClientRect();
+        const arenaRect = arena.getBoundingClientRect();
+        const startX = attackerRect.left + attackerRect.width/2 - arenaRect.left;
+        const startY = attackerRect.top + attackerRect.height/2 - arenaRect.top;
+
+        effect.style.left = startX + "px";
+        effect.style.top = startY + "px";
+
+        // Position finale (centre de la cible)
+        const targetRect = targetContainer.getBoundingClientRect();
+        const targetX = targetRect.left + targetRect.width/2 - arenaRect.left - startX;
+        const targetY = targetRect.top + targetRect.height/2 - arenaRect.top - startY;
+
+        // Définir les variables CSS pour l'animation
+        effect.style.setProperty("--target-x", targetX + "px");
+        effect.style.setProperty("--target-y", targetY + "px");
+
+        // Tremblement de la cible au moment de l’impact
+        setTimeout(() => {
+            targetContainer.classList.add("hit");
+        }, 300);
+
+        // Supprimer l’effet après animation
+        setTimeout(() => {
+            effect.remove();
+            targetContainer.classList.remove("hit");
+        }, 600);
+    }
+
+
+
+    function attack(type) {
+        if (isPaused) return;
+
+        const damage = Math.floor(Math.random() * 20) + 10;
+
+        const container1 = document.getElementById("pokemon1-container");
+        const container2 = document.getElementById("pokemon2-container");
+
+        if (turn === 1) {
+            showAttackEffect(type, container1, container2);
+            currentHP2 -= damage;
+
+            if (currentHP2 <= 0) {
+                currentHP2 = 0;
+                updateHP();
+                return win(pokemon1Data);
+            }
+
+            turn = 2;
+
+        } else {
+            showAttackEffect(type, container2, container1);
+            currentHP1 -= damage;
+
+            if (currentHP1 <= 0) {
+                currentHP1 = 0;
+                updateHP();
+                return win(pokemon2Data);
+            }
+
+            turn = 1;
+        }
+
+        updateHP();
+    }
+
+
+
+
+    async function getPokemonData(id) {
+        const response = await fetch(`https://pokeapi.co/api/v2/pokemon/${id}`);
+        return await response.json();
+    }
+
+    async function initializeBattle() {
+        const params = getQueryParams();
+
+        pokemon1Data = await getPokemonData(params.p1);
+        pokemon2Data = await getPokemonData(params.p2);
+
+        document.getElementById("pokemon1-name").textContent = pokemon1Data.name;
+        document.getElementById("pokemon2-name").textContent = pokemon2Data.name;
+
+        document.getElementById("pokemon1-image").src = pokemon1Data.sprites.front_default;
+        document.getElementById("pokemon2-image").src = pokemon2Data.sprites.front_default;
+
+        currentHP1 = pokemon1Data.stats.find(s => s.stat.name === "hp").base_stat;
+        currentHP2 = pokemon2Data.stats.find(s => s.stat.name === "hp").base_stat;
+
+        updateHP();
+    }
+
+    function updateHP() {
+
+        document.getElementById("pokemon1-current-health").textContent = currentHP1;
+        document.getElementById("pokemon2-current-health").textContent = currentHP2;
+
+        const maxHP1 = pokemon1Data.stats.find(s => s.stat.name === "hp").base_stat;
+        const maxHP2 = pokemon2Data.stats.find(s => s.stat.name === "hp").base_stat;
+
+        document.getElementById("pokemon1-health").style.width =
+            (currentHP1 / maxHP1 * 100) + "%";
+
+        document.getElementById("pokemon2-health").style.width =
+            (currentHP2 / maxHP2 * 100) + "%";
+    }
+
+
+    function win(pokemon) {
+
+        isPaused = true;
+
+        document.getElementById("winner-text").textContent =
+            pokemon.name.toUpperCase() + " A GAGNÉ !";
+
+        document.getElementById("winner-image").src =
+            pokemon.sprites.front_default;
+
+        document.getElementById("winner-overlay").style.display = "flex";
+    }
+
+
+    function restart() {
+        location.reload();
+    }
+
+    function goMenu() {
+        window.location.href = "index.html";
+    }
+
+</script>
+
+</body>
+</html>

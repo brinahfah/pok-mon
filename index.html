@@ -3,465 +3,82 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="CSS/poki.css"> <!-- Lien vers le fichier CSS -->
-    <title>Combat Pokémon</title>
+    <title>Menu Pokémon</title>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Fredoka:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="CSS/style.css">
 </head>
 <body>
-    <div class="background-container">
-        <div class="background">
-            <div class="sun"></div>
-            <div class="trees"></div>
-        </div>
 
-        <h1><center>Jeux de Pokémon</center></h1>
-        <div class="selection-container">
-            <label for="pokemon1-choice">Pokémon 1 :</label>
-            <select id="pokemon1-choice">
-                <option value="1">Bulbizarre</option>
-                <option value="4">Salamèche</option>
-                <option value="7">Carapuce</option>
-                <option value="25">Pikachu</option>
-                <option value="133">Évoli</option>
-            </select>
-
-            <label for="pokemon2-choice">Pokémon 2 :</label>
-            <select id="pokemon2-choice">
-                <option value="1">Bulbizarre</option>
-                <option value="4">Salamèche</option>
-                <option value="7">Carapuce</option>
-                <option value="25">Pikachu</option>
-                <option value="133">Évoli</option>
-            </select>
-
-            <button onclick="initializeBattle()">Fight</button>
-        </div>
-
-        <div class="arena" id="battle-arena">
-            <div class="pokemon-container" id="pokemon1-container">
-                <div class="pokemon-info">
-                    <span id="pokemon1-name"></span><br>
-                    Vie: <span id="pokemon1-current-health"></span>
-                </div>
-                <img id="pokemon1-image" class="pokemon" src="" alt="Pokémon 1">
-                <div class="health-bar">
-                    <div class="health-value" id="pokemon1-health"></div>
-                </div>
-                <div class="score-display">Score: <span id="score-player1">0</span></div>
-            </div>
-
-            <div class="pokemon-container" id="pokemon2-container">
-                <div class="pokemon-info">
-                    <span id="pokemon2-name"></span><br>
-                    Vie: <span id="pokemon2-current-health"></span>
-                </div>
-                <img id="pokemon2-image" class="pokemon" src="" alt="Pokémon 2">
-                <div class="health-bar">
-                    <div class="health-value" id="pokemon2-health"></div>
-                </div>
-                <div class="score-display">Score: <span id="score-player2">0</span></div>
-            </div>
-        </div>
-        <div id="battle-log"></div>
-
-        <div class="attack-buttons" id="attack-controls" style="display: none;">
-            <button class="attack-button fire-button" onclick="handleAttackInput('fire')">Feu (F)</button>
-            <button class="attack-button water-button" onclick="handleAttackInput('water')">Eau (A)</button>
-            <button class="attack-button electric-button" onclick="handleAttackInput('electric')">Éclair (E)</button>
-        </div>
-
-        <div id="winner-overlay">
-            <h2 id="winner-name-display"></h2>
-            <img id="winner-image-display" src="" alt="Winner">
-            <button onclick="resetBattle()">Nouveau Combat</button>
-        </div>
+<div class="background-container">
+    <div class="background">
+        <div class="sun"></div>
+        <div class="trees"></div>
     </div>
 
-    <script>
-        let pokemon1Data;
-        let pokemon2Data;
-        let currentPokemon1Health;
-        let currentPokemon2Health;
-        let scorePlayer1 = 0;
-        let scorePlayer2 = 0;
-        let isPlayer1Turn = true;
-        let canAttack = false;
-
-        let pokemon1Left = 0;
-        let pokemon2Left = 0;
-        const movementSpeed = 15;
-        const collisionThreshold = 100;
-
-        const typeEffectiveness = {
-            normal: { normal: 1, fire: 1, water: 1, grass: 1, electric: 1 },
-            fire: { normal: 1, fire: 0.5, water: 0.5, grass: 2, electric: 1 },
-            water: { normal: 1, fire: 2, water: 0.5, grass: 0.5, electric: 1 },
-            grass: { normal: 1, fire: 0.5, water: 2, grass: 0.5, electric: 1 },
-            electric: { normal: 1, fire: 1, water: 2, grass: 0.5, electric: 0.5 }
-        };
-
-        const attackPowers = {
-            normal: 15,
-            fire: 25,
-            water: 20,
-            grass: 18,
-            electric: 22
-        };
-
-        function getPokemonType(pokemonData) {
-            return pokemonData.types[0].type.name;
-        }
-
-        function logMessage(message) {
-            document.getElementById("battle-log").textContent += message + "\n";
-            document.getElementById("battle-log").scrollTop = document.getElementById("battle-log").scrollHeight;
-        }
-
-        function updateHealthBars() {
-            const healthPercentage1 = (currentPokemon1Health / pokemon1Data.stats.find(stat => stat.stat.name === "hp").base_stat) * 100;
-            const healthPercentage2 = (currentPokemon2Health / pokemon2Data.stats.find(stat => stat.stat.name === "hp").base_stat) * 100;
-            document.getElementById("pokemon1-health").style.width = `${Math.max(0, healthPercentage1)}%`;
-            document.getElementById("pokemon2-health").style.width = `${Math.max(0, healthPercentage2)}%`;
-            document.getElementById("pokemon1-health").style.backgroundColor = healthPercentage1 > 20 ? 'green' : 'red';
-            document.getElementById("pokemon2-health").style.backgroundColor = healthPercentage2 > 20 ? 'green' : 'red';
-        }
-
-        function updateHealthText() {
-            document.getElementById("pokemon1-current-health").textContent = currentPokemon1Health;
-            document.getElementById("pokemon2-current-health").textContent = currentPokemon2Health;
-        }
-
-        function updateScores() {
-            document.getElementById("score-player1").textContent = scorePlayer1;
-            document.getElementById("score-player2").textContent = scorePlayer2;
-        }
-
-        function showAttackControls() {
-            document.getElementById("attack-controls").style.display = "flex";
-        }
-
-        function hideAttackControls() {
-            document.getElementById("attack-controls").style.display = "none";
-        }
-
-        async function getPokemonData(pokemonId, elements) {
-            const response = await fetch(`https://pokeapi.co/api/v2/pokemon/${pokemonId}`);
-            const data = await response.json();
-
-            document.getElementById(elements.image).src = data.sprites.front_default;
-            document.getElementById(elements.name).textContent = data.name.charAt(0).toUpperCase() + data.name.slice(1);
-
-            const healthStat = data.stats.find(stat => stat.stat.name === "hp");
-            const baseHealth = healthStat ? healthStat.base_stat : 100;
-            return { baseHealth: baseHealth, data: data };
-        }
-
-        async function initializeBattle() {
-            const pokemon1Id = document.getElementById("pokemon1-choice").value;
-            const pokemon2Id = document.getElementById("pokemon2-choice").value;
-
-            const results1 = await getPokemonData(pokemon1Id, { image: "pokemon1-image", name: "pokemon1-name" });
-            const results2 = await getPokemonData(pokemon2Id, { image: "pokemon2-image", name: "pokemon2-name" });
-
-            pokemon1Data = results1.data;
-            pokemon2Data = results2.data;
-            currentPokemon1Health = results1.baseHealth;
-            currentPokemon2Health = results2.baseHealth;
-
-            updateHealthBars();
-            updateHealthText();
-            updateScores();
-            document.getElementById("battle-log").textContent = "";
-            isPlayer1Turn = true;
-            canAttack = true;
-            logMessage(`${pokemon1Data.name} vs ${pokemon2Data.name} - Le combat commence !`);
-            showAttackControls();
-
-            const arena = document.getElementById("battle-arena");
-            const arenaWidth = arena.offsetWidth;
-            const pokemon1Container = document.getElementById("pokemon1-container");
-            const pokemon2Container = document.getElementById("pokemon2-container");
-
-            pokemon1Left = arenaWidth * 0.1;
-            pokemon2Left = arenaWidth * 0.9 - pokemon2Container.offsetWidth;
-
-            pokemon1Container.style.left = `${pokemon1Left}px`;
-            pokemon2Container.style.left = `${pokemon2Left}px`;
-
-            document.removeEventListener('keydown', handleKeyPress);
-            document.addEventListener('keydown', handleKeyPress);
-            document.getElementById("battle-arena").removeEventListener('contextmenu', handleRightClick);
-            document.getElementById("battle-arena").addEventListener('contextmenu', handleRightClick);
-        }
-
-        async function animateAttack(attackerContainerId, attackerImageId, defenderContainerId, defenderImageId, attackType = 'normal') {
-            const attackerContainer = document.getElementById(attackerContainerId);
-            const defenderContainer = document.getElementById(defenderContainerId);
-            const attackerImage = document.getElementById(attackerImageId);
-            const defenderImage = document.getElementById(defenderImageId);
-
-            attackerImage.classList.add("attack");
-            await new Promise(resolve => setTimeout(resolve, 500));
-            attackerImage.classList.remove("attack");
-
-            let attackElement = null;
-            let animationPromise = Promise.resolve();
-
-            if (attackType === 'fire') {
-                attackElement = document.createElement('div');
-                attackElement.classList.add('fire-attack');
-            } else if (attackType === 'water') {
-                attackElement = document.createElement('div');
-                attackElement.classList.add('water-attack');
-            } else if (attackType === 'electric') {
-                attackElement = document.createElement('div');
-                attackElement.classList.add('electric-attack');
-            }
-
-            if (attackElement) {
-                attackerContainer.appendChild(attackElement);
-                const attackerRect = attackerContainer.getBoundingClientRect();
-                const defenderRect = defenderContainer.getBoundingClientRect();
-
-                const startX = attackerImage.offsetLeft + attackerImage.offsetWidth / 2 - attackElement.offsetWidth / 2;
-                const startY = attackerImage.offsetTop + attackerImage.offsetHeight / 2 - attackElement.offsetHeight / 2;
-
-                const endX = (defenderRect.left + defenderRect.width / 2) - attackerRect.left - attackElement.offsetWidth / 2;
-                const endY = (defenderRect.top + defenderRect.height / 2) - attackerRect.top - attackElement.offsetHeight / 2;
-
-                const duration = 500;
-                const keyframes = [
-                    { transform: `translate(${startX}px, ${startY}px) scale(0.5)`, opacity: 0.8 },
-                    { transform: `translate(${endX}px, ${endY}px) scale(1.2)`, opacity: 1 },
-                    { transform: `translate(${endX}px, ${endY}px) scale(0.8)`, opacity: 0 }
-                ];
-
-                attackElement.animate(keyframes, { duration: duration, easing: 'ease-in-out' });
-                animationPromise = new Promise(resolve => setTimeout(resolve, duration));
-            }
-
-            defenderImage.classList.add("shake");
-            await Promise.all([animationPromise, new Promise(resolve => setTimeout(resolve, 300))]);
-            defenderImage.classList.remove("shake");
-            if (attackElement && attackElement.parentNode) {
-                attackElement.parentNode.removeChild(attackElement);
-            }
-        }
-
-        async function performAttack(attackerData, defenderData, attackType) {
-            if (!canAttack) return;
-
-            canAttack = false;
-            let damage = Math.floor(Math.random() * 15) + 10;
-            const attackerType = getPokemonType(attackerData);
-            const defenderType = getPokemonType(defenderData);
-            const basePower = attackPowers[attackType] || attackPowers['normal'];
-            const typeMultiplier = typeEffectiveness[attackType]?.[defenderType] || 1;
-            damage = Math.max(1, Math.floor(basePower * typeMultiplier));
-
-            let attackerContainerId = "";
-            let attackerImageId = "";
-            let defenderContainerId = "";
-            let defenderImageId = "";
-
-            if (attackerData.name === pokemon1Data.name) {
-                attackerContainerId = "pokemon1-container";
-                attackerImageId = "pokemon1-image";
-                defenderContainerId = "pokemon2-container";
-                defenderImageId = "pokemon2-image";
-            } else {
-                attackerContainerId = "pokemon2-container";
-                attackerImageId = "pokemon2-image";
-                defenderContainerId = "pokemon1-container";
-                defenderImageId = "pokemon1-image";
-            }
-
-            // logMessage(`${attackerData.name} utilise ${attackType}!`); // Supprimé
-            await animateAttack(attackerContainerId, attackerImageId, defenderContainerId, defenderImageId, attackType);
-
-            if (attackerData.name === pokemon1Data.name) {
-                currentPokemon2Health = Math.max(0, currentPokemon2Health - damage);
-                // logMessage(`${pokemon2Data.name} subit ${damage} dégâts. Reste ${currentPokemon2Health} PV.`); // Supprimé
-            } else {
-                currentPokemon1Health = Math.max(0, currentPokemon1Health - damage);
-                // logMessage(`${pokemon1Data.name} subit ${damage} dégâts. Reste ${currentPokemon1Health} PV.`); // Supprimé
-            }
-
-            updateHealthBars();
-            updateHealthText();
-
-            if (currentPokemon1Health <= 0 || currentPokemon2Health <= 0) {
-                determineWinner();
-            } else {
-                isPlayer1Turn = !isPlayer1Turn;
-                // logMessage(`C'est au tour de ${isPlayer1Turn ? pokemon1Data.name : pokemon2Data.name}.`); // Supprimé
-                setTimeout(() => {
-                    canAttack = true;
-                }, 1000);
-            }
-        }
-
-        function determineWinner() {
-            let winner = null;
-            let winnerPokemonData = null;
-
-            if (currentPokemon1Health <= 0 && currentPokemon2Health <= 0) {
-                logMessage("Double KO ! C'est un match nul.");
-                winner = "Personne";
-            } else if (currentPokemon1Health <= 0) {
-                winner = pokemon2Data.name;
-                winnerPokemonData = pokemon2Data;
-                scorePlayer2++;
-            } else {
-                winner = pokemon1Data.name;
-                winnerPokemonData = pokemon1Data;
-                scorePlayer1++;
-            }
-
-            updateScores();
-            displayWinner(winner, winnerPokemonData);
-            canAttack = false;
-        }
-
-        function displayWinner(winnerName, winnerPokemon) {
-            const winnerOverlay = document.getElementById("winner-overlay");
-            const winnerNameDisplay = document.getElementById("winner-name-display");
-            const winnerImageDisplay = document.getElementById("winner-image-display");
-
-            winnerNameDisplay.textContent = `${winnerName} a gagné le combat !`;
-            if (winnerPokemon) {
-                winnerImageDisplay.src = winnerPokemon.sprites.front_default;
-            } else {
-                winnerImageDisplay.src = "";
-            }
-            winnerOverlay.style.display = "flex";
-            document.removeEventListener('keydown', handleKeyPress);
-            document.getElementById("battle-arena").removeEventListener('contextmenu', handleRightClick);
-        }
-
-        function resetBattle() {
-            const winnerOverlay = document.getElementById("winner-overlay");
-            winnerOverlay.style.display = "none";
-
-            currentPokemon1Health = pokemon1Data.stats.find(stat => stat.stat.name === "hp").base_stat;
-            currentPokemon2Health = pokemon2Data.stats.find(stat => stat.stat.name === "hp").base_stat;
-            updateHealthBars();
-            updateHealthText();
-            isPlayer1Turn = true;
-            canAttack = true;
-            document.getElementById("battle-log").textContent = "";
-            logMessage(`Nouveau combat !`);
-            showAttackControls();
-            document.addEventListener('keydown', handleKeyPress);
-            document.getElementById("battle-arena").addEventListener('contextmenu', handleRightClick);
-            initializeBattle();
-        }
-
-        function handleKeyPress(event) {
-            const pokemon1Container = document.getElementById("pokemon1-container");
-            const pokemon2Container = document.getElementById("pokemon2-container");
-            const arena = document.getElementById("battle-arena");
-
-            const arenaRect = arena.getBoundingClientRect();
-            const p1Rect = pokemon1Container.getBoundingClientRect();
-            const p2Rect = pokemon2Container.getBoundingClientRect();
-
-            let newP1Left = pokemon1Left;
-            let newP2Left = pokemon2Left;
-
-            // Player 1 (Arrow Keys)
-            if (event.key === 'ArrowLeft') {
-                newP1Left = Math.max(0, pokemon1Left - movementSpeed);
-            } else if (event.key === 'ArrowRight') {
-                newP1Left = Math.min(arenaRect.width - p1Rect.width, pokemon1Left + movementSpeed);
-            }
-
-            // Player 2 (WASD Keys)
-            if (event.key === 'a' || event.key === 'A') {
-                newP2Left = Math.max(0, pokemon2Left - movementSpeed);
-            } else if (event.key === 'd' || event.key === 'D') {
-                newP2Left = Math.min(arenaRect.width - p2Rect.width, pokemon2Left + movementSpeed);
-            }
-
-            // Apply new positions
-            pokemon1Left = newP1Left;
-            pokemon2Left = newP2Left;
-
-            pokemon1Container.style.left = `${pokemon1Left}px`;
-            pokemon2Container.style.left = `${pokemon2Left}px`;
-
-            // Handle attacks based on key presses
-            if (!canAttack) return;
-
-            if (event.key === 'f' || event.key === 'F') {
-                if (isPlayer1Turn) {
-                    performAttack(pokemon1Data, pokemon2Data, 'fire');
-                } else {
-                    performAttack(pokemon2Data, pokemon1Data, 'fire');
-                }
-            } else if (event.key === 'e' || event.key === 'E') {
-                if (isPlayer1Turn) {
-                    performAttack(pokemon1Data, pokemon2Data, 'electric');
-                } else {
-                    performAttack(pokemon2Data, pokemon1Data, 'electric');
-                }
-            } else if (event.key === 'q' || event.key === 'Q') { // Changed P1 Water to 'Q' to avoid conflict with P2 movement 'A'
-                 if (isPlayer1Turn) {
-                     performAttack(pokemon1Data, pokemon2Data, 'water');
-                 }
-            } else if (event.key === 'w' || event.key === 'W') { // Changed P2 Water to 'W' to avoid conflict with P2 movement 'A'
-                 if (!isPlayer1Turn) {
-                     performAttack(pokemon2Data, pokemon1Data, 'water');
-                 }
-            }
-        }
-
-        function checkCollision() {
-            const pokemon1Container = document.getElementById("pokemon1-container");
-            const pokemon2Container = document.getElementById("pokemon2-container");
-
-            const p1Rect = pokemon1Container.getBoundingClientRect();
-            const p2Rect = pokemon2Container.getBoundingClientRect();
-
-            const p1Left = p1Rect.left;
-            const p1Right = p1Rect.right;
-            const p2Left = p2Rect.left;
-            const p2Right = p2Rect.right;
-
-            // Check for horizontal overlap
-            const horizontalOverlap = Math.max(0, Math.min(p1Right, p2Right) - Math.max(p1Left, p2Left));
-
-            // Collision occurs if there's significant overlap
-            return horizontalOverlap > (p1Rect.width + p2Rect.width) / 2 - collisionThreshold;
-        }
-
-        function handleRightClick(event) {
-            event.preventDefault(); // Prevent default right-click context menu
-
-            if (!canAttack) {
-                // logMessage("Impossible d'attaquer maintenant."); // Supprimé
-                return;
-            }
-
-            if (checkCollision()) {
-                // logMessage("Collision détectée ! Tentative d'attaque..."); // Supprimé
-                if (isPlayer1Turn) {
-                    performAttack(pokemon1Data, pokemon2Data, 'normal');
-                } else {
-                    performAttack(pokemon2Data, pokemon1Data, 'normal');
-                }
-            } else {
-                // logMessage("Pas de collision pour l'attaque au clic droit."); // Supprimé
-            }
-        }
-
-        function handleAttackInput(attackType) {
-            if (!canAttack) return;
-            if (isPlayer1Turn) {
-                performAttack(pokemon1Data, pokemon2Data, attackType);
-            } else {
-                performAttack(pokemon2Data, pokemon1Data, attackType);
-            }
-        }
-    </script>
+    <div class="content">
+        <h1>Pokémon Combat</h1>
+
+        <div class="menu-buttons">
+            <button onclick="startGame()">Jouer</button>
+           
+        </div>
+
+
+        <!-- Pokémon décoratifs depuis l'API -->
+        <div id="floating-pokemons"></div>
+    </div>
+</div>
+
+<!-- Modale Description / Règles -->
+<div id="rules-modal" class="modal">
+    <div class="modal-content">
+        <h2>Bienvenue dans Pokémon Combat !</h2>
+        <p>
+            Ce jeu te permet de choisir deux Pokémon qui vont s’affronter.
+            <br><br>
+            Règles :<br>
+            - Chaque Pokémon dispose d’attaques Feu, Eau et Éclair.<br>
+            - Cliquez sur une attaque pour infliger des dégâts.<br>
+            - Le combat continue jusqu’à ce qu’un Pokémon perde tous ses PV.<br>
+            - Vous pouvez mettre le jeu en pause avec le menu.
+        </p>
+        <button onclick="closeModal()">Fermer</button>
+    </div>
+</div>
+
+<script>
+// Affiche la modale au chargement
+window.onload = () => {
+    document.getElementById('rules-modal').style.display = 'flex';
+    loadFloatingPokemons();
+}
+
+function closeModal() {
+    document.getElementById('rules-modal').style.display = 'none';
+}
+
+function startGame() {
+    window.location.href = "choice.html"; 
+}
+
+
+
+// Fonction pour charger des Pokémon décoratifs depuis l'API
+async function loadFloatingPokemons() {
+    const container = document.getElementById("floating-pokemons");
+    const ids = [25, 4, 1, 7]; // Pikachu, Charmander, Bulbasaur, Squirtle
+    for (let i = 0; i < ids.length; i++) {
+        const res = await fetch(`https://pokeapi.co/api/v2/pokemon/${ids[i]}`);
+        const data = await res.json();
+        const img = document.createElement("img");
+        img.src = data.sprites.front_default;
+        img.classList.add("floating-pokemon");
+        // Positions aléatoires
+        img.style.top = (50 + i*80) + "px";
+        img.style.left = (30 + i*100) + "px";
+        container.appendChild(img);
+    }
+}
+</script>
 </body>
 </html>

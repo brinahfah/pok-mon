@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Sélection des Pokémon</title>
+    <link rel="stylesheet" href="CSS/choice.css">
+</head>
+<body>
+
+    <div class="background-container">
+        <div class="background">
+            <div class="sun"></div>
+            <div class="trees"></div>
+        </div>
+
+        <div class="selection-content">
+            <h1>Choisis les Pokémon</h1>
+
+            <div class="selectors">
+
+                <div class="pokemon-choice">
+                    <label>Pokémon 1</label>
+                    <select id="pokemon1">
+                        <option value="1">Bulbizarre</option>
+                        <option value="4">Salamèche</option>
+                        <option value="7">Carapuce</option>
+                        <option value="25">Pikachu</option>
+                        <option value="133">Évoli</option>
+                    </select>
+                    <img id="preview1">
+                </div>
+
+                <div class="pokemon-choice">
+                    <label>Pokémon 2</label>
+                    <select id="pokemon2">
+                        <option value="1">Bulbizarre</option>
+                        <option value="4">Salamèche</option>
+                        <option value="7">Carapuce</option>
+                        <option value="25">Pikachu</option>
+                        <option value="133">Évoli</option>
+                    </select>
+                    <img id="preview2">
+                </div>
+
+            </div>
+
+            <div class="buttons">
+                <button onclick="startBattle()">Commencer le Combat</button>
+                <button onclick="goBack()">Retour</button>
+            </div>
+        </div>
+    </div>
+
+<script>
+
+function updatePreview(selectId, imageId) {
+    const pokemonId = document.getElementById(selectId).value;
+    document.getElementById(imageId).src =
+        `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${pokemonId}.png`;
+}
+
+document.getElementById("pokemon1").addEventListener("change", () => {
+    updatePreview("pokemon1", "preview1");
+});
+
+document.getElementById("pokemon2").addEventListener("change", () => {
+    updatePreview("pokemon2", "preview2");
+});
+
+// Affichage initial
+updatePreview("pokemon1", "preview1");
+updatePreview("pokemon2", "preview2");
+
+function startBattle() {
+    const p1 = document.getElementById("pokemon1").value;
+    const p2 = document.getElementById("pokemon2").value;
+
+    window.location.href = `combat.html?p1=${p1}&p2=${p2}`;
+}
+
+function goBack() {
+    window.location.href = "index.html";
+}
+
+</script>
+
+</body>
+</html>
